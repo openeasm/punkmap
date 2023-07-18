@@ -7,7 +7,7 @@ import (
 
 func ReadAll(conn net.Conn) (data []byte, err error) {
 	// read data from conn
-	buffer := make([]byte, 64)
+	buffer := make([]byte, 1024)
 	var waitTtl = 1
 	for {
 		n, err := conn.Read(buffer)
