@@ -9,7 +9,6 @@ type RDP struct {
 }
 
 func (s *RDP) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
-	// no need send data, read data directly
 	// read data from conn
 	/* 0x03,       # version
 	   0x00,       # reserved

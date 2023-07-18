@@ -8,7 +8,7 @@ import (
 
 func TestHTTP_Scan(t *testing.T) {
 	var task = Task{
-		ip:   "baidu.com",
+		ip:   "www.baidu.com",
 		port: "80",
 	}
 	conn, _ := net.Dial("tcp", task.ip+":"+task.port)

@@ -7,6 +7,9 @@ import (
 
 func main() {
 	var scanner services.Scanner
-	_, _ = flags.Parse(&scanner)
-	scanner.Start()
+	var _, err = flags.Parse(&scanner)
+
+	if err == nil {
+		scanner.Start()
+	}
 }
