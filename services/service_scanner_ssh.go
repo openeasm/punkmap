@@ -9,7 +9,7 @@ import (
 type SSH struct {
 }
 
-func (s *SSH) Scan(conn net.Conn) (service string, banner []byte, err error) {
+func (s *SSH) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
 	// no need send data, read data directly
 	// read data from conn
 	banner, err = common.ReadAll(conn)

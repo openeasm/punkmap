@@ -17,6 +17,14 @@ type Task struct {
 	timeout int
 }
 
+func (task Task) ToHttpHost() string {
+	if task.port == "80" || task.port == "443" {
+		return task.ip
+	} else {
+		return task.ip + ":" + task.port
+	}
+}
+
 type Result struct {
 	IP        string `json:"ip"`
 	Port      string `json:"port"`
@@ -52,7 +60,7 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp"}
 	if PortScannersMapping[t.port] != nil {
 		for _, scanner := range PortScannersMapping[t.port] {
-			service, banner, err := scanner.Scan(conn)
+			service, banner, err := scanner.Scan(conn, t)
 			if err != nil {
 				result.ErrorMsg = err.Error()
 			}

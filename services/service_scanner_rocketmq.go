@@ -11,7 +11,7 @@ type RocketMQ struct {
 	ServiceScanner
 }
 
-func (s *RocketMQ) Scan(conn net.Conn) (service string, banner []byte, err error) {
+func (s *RocketMQ) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
 	handshake := common.MustBase64Decode("AAAA0AAAALJ7ImNvZGUiOjMxOCwiZXh0RmllbGRzIjp7IkFjY2Vzc0tleSI6InJvY2tldG1xMiIsIlNpZ25hdHVyZSI6ImNHSmpxMUZCTSs0VUJsUnNORE50azBVOW5EMD0ifSwiZmxhZyI6MCwibGFuZ3VhZ2UiOiJKQVZBIiwib3BhcXVlIjowLCJzZXJpYWxpemVUeXBlQ3VycmVudFJQQyI6IkpTT04iLCJ2ZXJzaW9uIjo0MzV9dGhpc19pc19rZXk9dGhpc19pc192YWx1ZQo=")
 	write, err := conn.Write(handshake)
 	if err != nil {

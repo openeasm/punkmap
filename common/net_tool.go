@@ -5,14 +5,16 @@ import "net"
 func ReadAll(conn net.Conn) (data []byte, err error) {
 	// read data from conn
 	buffer := make([]byte, 1024)
+	var wait_ttl = 1
 	for {
 		n, err := conn.Read(buffer)
-		if err != nil {
+		data = append(data, buffer[:n]...)
+		if err != nil && wait_ttl == 0 {
 			return data, err
 		}
-		data = append(data, buffer[:n]...)
-		if n < 1024 {
+		if n < 1024 && wait_ttl == 0 {
 			return data, nil
 		}
+		wait_ttl--
 	}
 }
