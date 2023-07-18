@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"fmt"
 	"net"
 )
 
@@ -12,7 +11,6 @@ func ReadAll(conn net.Conn) (data []byte, err error) {
 	var waitTtl = 1
 	for {
 		n, err := conn.Read(buffer)
-		fmt.Println(n)
 		data = append(data, buffer[:n]...)
 		if err != nil && waitTtl == 0 {
 			return data, err
