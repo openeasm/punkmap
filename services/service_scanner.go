@@ -52,6 +52,7 @@ type Scanner struct {
 	InputNatsName    string `long:"input-nats-name" description:"the worker name in nats"  default:""`
 
 	OutputNatsURL     string `long:"output-nats" description:"ues nats as output"  default:""`
+	NatsWriterNum     int    `long:"nats-writer-num" description:"the number of nats writer"  default:"10"`
 	OutNatsJS         string `long:"output-nats-js" description:"the output jetstream name in nats"  default:""`
 	OutputNatsSubject string `long:"output-nats-subject" description:"the output topic name in nats"  default:""`
 	OutputNatsGzip    bool   `long:"output-gzip" description:"use gzip to compress output"`
@@ -189,7 +190,10 @@ func (s *Scanner) Start() {
 	outputWg := sync.WaitGroup{}
 	scanWg := sync.WaitGroup{}
 	if len(s.OutputNatsURL) > 0 {
-		go s.NatsWriteWorker(outputChan, &outputWg)
+		for i := 0; i < s.NatsWriterNum; i++ {
+			go s.NatsWriteWorker(outputChan, &outputWg)
+		}
+
 	} else {
 		go s.WriteWorker(outputChan, &outputWg)
 	}
