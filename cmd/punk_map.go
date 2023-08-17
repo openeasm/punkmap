@@ -11,5 +11,7 @@ func main() {
 
 	if err == nil {
 		scanner.Start()
+	} else {
+		panic(err)
 	}
 }

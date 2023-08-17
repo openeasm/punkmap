@@ -62,6 +62,8 @@ type Scanner struct {
 	Retries    int    `short:"r" long:"retries" description:"retries" default:"1"`
 	Ports      string `long:"ports" description:"ports to scan" default:"22,9876"`
 
+	Debug bool `short:"d" long:"debug" description:"debug" `
+
 	OutputHex   bool `long:"output-hex" description:"output base64"`
 	OutputClose bool `long:"output-close" description:"output closed ports"`
 }
@@ -99,6 +101,9 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 			task := Task{ip: ip, port: port, timeout: s.Timeout}
 			result := s.Scan(task)
 			result.Time = time.Now().Unix()
+			if s.Debug {
+				log.Printf("scan %s:%s, open:%t ", ip, port, result.Open)
+			}
 			outputChan <- result
 		} else {
 			for _, port := range strings.Split(s.Ports, ",") {
