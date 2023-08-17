@@ -56,6 +56,8 @@ type Scanner struct {
 	OutNatsJS         string `long:"output-nats-js" description:"the output jetstream name in nats"  default:""`
 	OutputNatsSubject string `long:"output-nats-subject" description:"the output topic name in nats"  default:""`
 	OutputNatsGzip    bool   `long:"output-gzip" description:"use gzip to compress output"`
+
+	NatsWorkerName string `long:"nats-worker-name" description:"the worker name in nats"  default:"punkmap-scanner"`
 	// below is for scan
 	ProcessNum int    `short:"p" long:"process" description:"process number"  default:"10"`
 	Timeout    int    `short:"t" long:"timeout" description:"timeout"  default:"3"`
@@ -216,8 +218,7 @@ func (s *Scanner) Start() {
 			Subjects: []string{s.InputNatsSubject},
 		})
 		c, _ := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
-			Durable:   "demoooo",
-			AckPolicy: jetstream.AckExplicitPolicy,
+			Name: s.NatsWorkerName,
 		})
 		for {
 			msg, err := c.Next()
