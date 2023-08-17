@@ -100,6 +100,9 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 			// split ip:port
 			ip := strings.Split(ipAddr, ":")[0]
 			port := strings.Split(ipAddr, ":")[1]
+			if s.Debug {
+				log.Printf("start scan %s:%s", ip, port)
+			}
 			task := Task{ip: ip, port: port, timeout: s.Timeout}
 			result := s.Scan(task)
 			result.Time = time.Now().Unix()
