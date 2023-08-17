@@ -5,7 +5,6 @@ import (
 	"context"
 	"easm_punkmap/common"
 	"encoding/json"
-	"fmt"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"log"
@@ -171,7 +170,10 @@ func (s *Scanner) NatsWriteWorker(output chan *Result, outputWg *sync.WaitGroup)
 				if s.OutputNatsGzip {
 					jsonData = common.MustGzipEncode(jsonData)
 				}
-				fmt.Println(nc.Publish(s.OutputNatsSubject, jsonData))
+				err := nc.Publish(s.OutputNatsSubject, jsonData)
+				if err != nil {
+					log.Println(err)
+				}
 			} else {
 				return
 			}
