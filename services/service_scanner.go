@@ -243,6 +243,9 @@ func (s *Scanner) Start() {
 				if err != nil {
 					break
 				}
+				if msg == nil {
+					break
+				}
 				inputChan <- string(msg.Data())
 				msg.Ack()
 			}
