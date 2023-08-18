@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime/pprof"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -86,8 +87,10 @@ type Scanner struct {
 
 	Debug bool `short:"d" long:"debug" description:"debug" `
 
-	OutputHex   bool `long:"output-hex" description:"output base64"`
-	OutputClose bool `long:"output-close" description:"output closed ports"`
+	OutputHex        bool   `long:"output-hex" description:"output base64"`
+	OutputClose      bool   `long:"output-close" description:"output closed ports"`
+	EnableCpuProfile bool   `long:"enable-cpu-profile" description:"enable cpu profile" default:"false"`
+	CpuProfileName   string `long:"enable-cpu-profile" description:"cpu profilename" default:"cpu.prof"`
 }
 
 func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
@@ -259,6 +262,14 @@ func (s *Scanner) PrintMatrix() {
 	}
 }
 func (s *Scanner) Start() {
+	if s.EnableCpuProfile {
+		cpuf, err := os.Create(s.CpuProfileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(cpuf)
+		defer pprof.StopCPUProfile()
+	}
 	if s.PrintMetricsInterval > 0 {
 		go s.PrintMatrix()
 	}
@@ -302,10 +313,6 @@ func (s *Scanner) Start() {
 				time.Sleep(10 * time.Second)
 				continue
 			}
-			if err != nil {
-				log.Println(err)
-				continue
-			}
 			for {
 				if msgs == nil {
 					break
@@ -320,6 +327,7 @@ func (s *Scanner) Start() {
 				inputChan <- string(msg.Data())
 				msg.Ack()
 			}
+			time.Sleep(1 * time.Second)
 		}
 
 	} else {
