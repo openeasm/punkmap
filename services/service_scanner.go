@@ -202,10 +202,12 @@ func (s *Scanner) Start() {
 	if len(s.OutputNatsURL) > 0 {
 		for i := 0; i < s.NatsWriterNum; i++ {
 			go s.NatsWriteWorker(outputChan, &outputWg)
+			outputWg.Add(1)
 		}
 
 	} else {
 		go s.WriteWorker(outputChan, &outputWg)
+		outputWg.Add(1)
 	}
 
 	for i := 0; i < s.ProcessNum; i++ {
