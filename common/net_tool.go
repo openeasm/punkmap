@@ -8,18 +8,18 @@ import (
 func ReadAll(conn net.Conn) (data []byte, err error) {
 	// read data from conn
 	buffer := make([]byte, 1024)
-	var waitTtl = 1
-	for {
+
+	for waitTtl := 1; waitTtl > 0; waitTtl-- {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
-		if err != nil && waitTtl == 0 {
+		if err != nil {
 			return data, err
 		}
-		if n < 1024 && waitTtl == 0 {
+		if n < 1024 {
 			return data, nil
 		}
-		waitTtl--
 	}
+	return data, err
 }
 func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 	buffer := make([]byte, 1)
