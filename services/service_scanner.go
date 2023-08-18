@@ -302,16 +302,26 @@ func (s *Scanner) Start() {
 		c, _ := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
 			Name: s.NatsWorkerName,
 		})
+		//c, err := stream.Consumer(timeoutCtx, "punk-map")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
 		for {
 			//msg, err := c.Next()
-			msgs, err := c.FetchNoWait(s.ProcessNum * 4)
+			msgs, err := c.Fetch(s.ProcessNum*4, jetstream.FetchMaxWait(10*time.Second))
 			if err != nil {
 				log.Println(err)
-				time.Sleep(10 * time.Second)
 				continue
 			}
+
+			if s.Debug {
+				log.Println("fetch", len(msgs.Messages()), " messages from nats.")
+			}
+
 			for {
 				if msgs == nil {
+					log.Println("no message in nats. sleep 1 second.")
+					time.Sleep(1 * time.Second)
 					break
 				}
 				msg := <-msgs.Messages()
@@ -324,7 +334,7 @@ func (s *Scanner) Start() {
 				inputChan <- string(msg.Data())
 				msg.Ack()
 			}
-			time.Sleep(1 * time.Second)
+
 		}
 
 	} else {
