@@ -41,10 +41,22 @@ type Result struct {
 	Time      int64  `json:"time"`
 }
 
+// Metrics 统计指标
+type Metrics struct {
+	Total      int64 `json:"total"`
+	Open       int64 `json:"open"`
+	Close      int64 `json:"close"`
+	Processing int64 `json:"processing"`
+	HasBanner  int64 `json:"has_banner"`
+	NoBanner   int64 `json:"no_banner"`
+}
+
 type Scanner struct {
 	// below is for stdin/stdout
-	InputFile  string `short:"i" long:"input" description:"input file"  default:"-"`
-	OutputFile string `short:"o" long:"output" description:"output file"  default:"-"`
+	Metrics
+	PrintMetricsInterval int64  `long:"print-metrics-interval" description:"print metrics interval"  default:"10"`
+	InputFile            string `short:"i" long:"input" description:"input file"  default:"-"`
+	OutputFile           string `short:"o" long:"output" description:"output file"  default:"-"`
 	// below is for nats
 	InputNatsURL     string `long:"input-nats" description:"ues nats as input"  default:""`
 	InputNatsJS      string `long:"input-nats-js" description:"the jetstream name in nats"  default:""`
@@ -71,23 +83,23 @@ type Scanner struct {
 }
 
 func (s *Scanner) Scan(t Task) (r *Result) {
-	// dial ip:port
-	conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
-	if err != nil {
-		return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
-	}
-	defer conn.Close()
-	// read data from conn
-
 	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp"}
 	if PortScannersMapping[t.port] != nil {
 		for _, scanner := range PortScannersMapping[t.port] {
+			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
+			if err != nil {
+				return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
+			}
+			defer conn.Close()
 			service, banner, err := scanner.Scan(conn, t)
 			if err != nil {
 				result.ErrorMsg = err.Error()
 			}
 			result.Service = service
 			result.BannerHex = banner
+			if banner != nil {
+				break
+			}
 		}
 	}
 
