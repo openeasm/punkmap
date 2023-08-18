@@ -35,7 +35,6 @@ func (s *RDP) Scan(conn net.Conn, task Task) (service string, banner []byte, err
 		}
 	}
 	return "", banner, err
-
 }
 
 func (s *RDP) DefaultPorts() []string {
