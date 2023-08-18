@@ -90,7 +90,7 @@ type Scanner struct {
 	OutputHex        bool   `long:"output-hex" description:"output base64"`
 	OutputClose      bool   `long:"output-close" description:"output closed ports"`
 	EnableCpuProfile bool   `long:"enable-cpu-profile" description:"enable cpu profile" default:"false"`
-	CpuProfileName   string `long:"enable-cpu-profile" description:"cpu profilename" default:"cpu.prof"`
+	CpuProfileName   string `long:"cpu-profile-name" description:"cpu profilename" default:"punkmap_cpu.prof"`
 }
 
 func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
