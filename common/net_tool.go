@@ -35,6 +35,7 @@ func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 			return data, nil
 		}
 	}
+	return data, err
 }
 func ReadUntilNBytes(conn net.Conn, maxBytes int) (data []byte, err error) {
 	buffer := make([]byte, maxBytes)
@@ -50,4 +51,5 @@ func ReadUntilNBytes(conn net.Conn, maxBytes int) (data []byte, err error) {
 			return data, nil
 		}
 	}
+	return data, err
 }
