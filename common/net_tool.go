@@ -24,8 +24,7 @@ func ReadAll(conn net.Conn) (data []byte, err error) {
 func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 	buffer := make([]byte, 1)
 	readCnt := 0
-	waitTtl := 1
-	for {
+	for waitTtl := 1; waitTtl > 0; waitTtl-- {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		readCnt += n
@@ -35,14 +34,12 @@ func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 		if bytes.Contains(buffer[:n], []byte("\n")) {
 			return data, nil
 		}
-		waitTtl--
 	}
 }
 func ReadUntilNBytes(conn net.Conn, maxBytes int) (data []byte, err error) {
 	buffer := make([]byte, maxBytes)
 	readCnt := 0
-	waitTtl := 1
-	for {
+	for waitTtl := 1; waitTtl > 0; waitTtl-- {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		readCnt += n
@@ -52,7 +49,5 @@ func ReadUntilNBytes(conn net.Conn, maxBytes int) (data []byte, err error) {
 		if readCnt >= maxBytes {
 			return data, nil
 		}
-		waitTtl--
 	}
-
 }
