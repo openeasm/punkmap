@@ -228,6 +228,11 @@ func (s *Scanner) Start() {
 			msgs, err := c.FetchNoWait(s.ProcessNum * 4)
 			if err != nil {
 				log.Println(err)
+				time.Sleep(10 * time.Second)
+				continue
+			}
+			if err != nil {
+				log.Println(err)
 				continue
 			}
 			for {
