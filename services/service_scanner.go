@@ -299,32 +299,16 @@ func (s *Scanner) Start() {
 			Name:     s.InputNatsJS,
 			Subjects: []string{s.InputNatsSubject},
 		})
-		c, _ := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
-			Name: s.NatsWorkerName,
-		})
-		//c, err := stream.Consumer(timeoutCtx, "punk-map")
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-		for {
-			//msg, err := c.Next()
-			msgs, err := c.Fetch(s.ProcessNum*4, jetstream.FetchMaxWait(10*time.Second))
-			if err != nil {
-				log.Println(err)
-				continue
-			}
 
-			if s.Debug {
-				log.Println("fetch", len(msgs.Messages()), " messages from nats.")
-			}
+		for {
+			c, _ := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
+				Name: s.NatsWorkerName,
+			})
+			//msg, err := c.Next()
+			var cxt, _ = c.Messages()
 
 			for {
-				if msgs == nil {
-					log.Println("no message in nats. sleep 1 second.")
-					time.Sleep(1 * time.Second)
-					break
-				}
-				msg := <-msgs.Messages()
+				msg, err := cxt.Next()
 				if err != nil {
 					break
 				}
