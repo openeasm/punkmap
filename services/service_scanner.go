@@ -236,6 +236,9 @@ func (s *Scanner) Start() {
 				continue
 			}
 			for {
+				if msgs == nil {
+					break
+				}
 				msg := <-msgs.Messages()
 				if err != nil {
 					break
