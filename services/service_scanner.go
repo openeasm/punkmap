@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -47,6 +48,9 @@ type Metrics struct {
 	Open       int64 `json:"open"`
 	Close      int64 `json:"close"`
 	Processing int64 `json:"processing"`
+	MaxTime    int64 `json:"max_time"`
+	MinTime    int64 `json:"min_time"`
+	AvgTime    int64 `json:"avg_time"`
 	HasBanner  int64 `json:"has_banner"`
 	NoBanner   int64 `json:"no_banner"`
 }
@@ -54,7 +58,7 @@ type Metrics struct {
 type Scanner struct {
 	// below is for stdin/stdout
 	Metrics
-	PrintMetricsInterval int64  `long:"print-metrics-interval" description:"print metrics interval"  default:"10"`
+	PrintMetricsInterval int    `long:"print-metrics-interval" description:"print metrics interval"  default:"10"`
 	InputFile            string `short:"i" long:"input" description:"input file"  default:"-"`
 	OutputFile           string `short:"o" long:"output" description:"output file"  default:"-"`
 	// below is for nats
@@ -108,6 +112,9 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for ipAddr := range inputChan {
+		atomic.AddInt64(&s.Processing, 1)
+		atomic.AddInt64(&s.Total, 1)
+
 		if strings.Contains(ipAddr, ":") { //
 			// split ip:port
 			ip := strings.Split(ipAddr, ":")[0]
@@ -115,12 +122,26 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 			if s.Debug {
 				log.Printf("start scan %s:%s", ip, port)
 			}
+			// 开始扫描
+			start_time := time.Now().UnixMilli()
 			task := Task{ip: ip, port: port, timeout: s.Timeout}
 			result := s.Scan(task)
-			result.Time = time.Now().Unix()
-			if s.Debug {
-				log.Printf("scan %s:%s, open:%t ", ip, port, result.Open)
+			end_time := time.Now().UnixMilli()
+			if result.Open {
+				atomic.AddInt64(&s.Open, 1)
+			} else {
+				atomic.AddInt64(&s.Close, 1)
 			}
+			if result.BannerHex != nil {
+				atomic.AddInt64(&s.HasBanner, 1)
+			} else {
+				atomic.AddInt64(&s.NoBanner, 1)
+			}
+			total_cost := end_time - start_time
+			if s.Debug {
+				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", ip, port, result.Open, total_cost)
+			}
+			atomic.AddInt64(&s.Processing, -1)
 			outputChan <- result
 		} else {
 			for _, port := range strings.Split(s.Ports, ",") {
@@ -203,8 +224,22 @@ func (s *Scanner) NatsWriteWorker(output chan *Result, outputWg *sync.WaitGroup)
 		}
 	}
 }
-
+func (s *Scanner) PrintMatrix() {
+	for {
+		time.Sleep(time.Duration(s.PrintMetricsInterval) * time.Second)
+		processing := atomic.LoadInt64(&s.Metrics.Processing)
+		total := atomic.LoadInt64(&s.Metrics.Total)
+		open := atomic.LoadInt64(&s.Metrics.Open)
+		close := atomic.LoadInt64(&s.Metrics.Close)
+		hasBanner := atomic.LoadInt64(&s.Metrics.HasBanner)
+		noBanner := atomic.LoadInt64(&s.Metrics.NoBanner)
+		log.Printf("processing:%d, total:%d, open:%d, close:%d, hasBanner:%d, noBanner:%d", processing, total, open, close, hasBanner, noBanner)
+	}
+}
 func (s *Scanner) Start() {
+	if s.PrintMetricsInterval > 0 {
+		go s.PrintMatrix()
+	}
 	inputChan := make(chan string, s.ProcessNum*4)
 	outputChan := make(chan *Result, s.ProcessNum*4)
 
