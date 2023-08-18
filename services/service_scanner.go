@@ -224,12 +224,20 @@ func (s *Scanner) Start() {
 			Name: s.NatsWorkerName,
 		})
 		for {
-			msg, err := c.Next()
+			//msg, err := c.Next()
+			msgs, err := c.FetchNoWait(s.ProcessNum * 4)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				continue
 			}
-			inputChan <- string(msg.Data())
-			msg.Ack()
+			for {
+				msg := <-msgs.Messages()
+				if err != nil {
+					break
+				}
+				inputChan <- string(msg.Data())
+				msg.Ack()
+			}
 		}
 
 	} else {
