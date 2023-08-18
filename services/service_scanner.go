@@ -55,6 +55,10 @@ type Metrics struct {
 	NoBanner   int64 `json:"no_banner"`
 }
 
+func (m *Metrics) LogSuccessRate() {
+	log.Printf("LogSuccessRate: %f,has banner rate: %f\n", float64(m.Open)/float64(m.Total), float64(m.HasBanner)/float64(m.Total))
+}
+
 type Scanner struct {
 	// below is for stdin/stdout
 	Metrics
@@ -86,6 +90,22 @@ type Scanner struct {
 	OutputClose bool `long:"output-close" description:"output closed ports"`
 }
 
+func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.Timeout)*time.Second*2)
+	defer cancel()
+	ch := make(chan struct{})
+	go func() {
+		r = s.Scan(Task{ip: t.ip, port: t.port, timeout: s.Timeout})
+		ch <- struct{}{}
+	}()
+	select {
+	case <-ch:
+		return
+	case <-ctx.Done():
+		r = &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: "global-timeout", Protocol: "tcp"}
+		return
+	}
+}
 func (s *Scanner) Scan(t Task) (r *Result) {
 	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp"}
 	if PortScannersMapping[t.port] != nil {
@@ -123,10 +143,10 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 				log.Printf("start scan %s:%s", ip, port)
 			}
 			// 开始扫描
-			start_time := time.Now().UnixMilli()
+			startTime := time.Now().UnixMilli()
 			task := Task{ip: ip, port: port, timeout: s.Timeout}
-			result := s.Scan(task)
-			end_time := time.Now().UnixMilli()
+			result := s.ScanWithGlobalTimeout(task)
+			endTime := time.Now().UnixMilli()
 			if result.Open {
 				atomic.AddInt64(&s.Open, 1)
 			} else {
@@ -137,9 +157,9 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 			} else {
 				atomic.AddInt64(&s.NoBanner, 1)
 			}
-			total_cost := end_time - start_time
+			totalCost := endTime - startTime
 			if s.Debug {
-				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", ip, port, result.Open, total_cost)
+				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", ip, port, result.Open, totalCost)
 			}
 			atomic.AddInt64(&s.Processing, -1)
 			outputChan <- result
@@ -226,6 +246,7 @@ func (s *Scanner) NatsWriteWorker(output chan *Result, outputWg *sync.WaitGroup)
 }
 func (s *Scanner) PrintMatrix() {
 	for {
+
 		time.Sleep(time.Duration(s.PrintMetricsInterval) * time.Second)
 		processing := atomic.LoadInt64(&s.Metrics.Processing)
 		total := atomic.LoadInt64(&s.Metrics.Total)
@@ -234,6 +255,7 @@ func (s *Scanner) PrintMatrix() {
 		hasBanner := atomic.LoadInt64(&s.Metrics.HasBanner)
 		noBanner := atomic.LoadInt64(&s.Metrics.NoBanner)
 		log.Printf("processing:%d, total:%d, open:%d, close:%d, hasBanner:%d, noBanner:%d", processing, total, open, close, hasBanner, noBanner)
+		s.Metrics.LogSuccessRate()
 	}
 }
 func (s *Scanner) Start() {
