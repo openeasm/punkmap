@@ -1,5 +1,7 @@
 package services
 
+import "github.com/pkg/profile"
+
 import (
 	"bufio"
 	"context"
@@ -8,9 +10,9 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"log"
+
 	"net"
 	"os"
-	"runtime/pprof"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -263,12 +265,7 @@ func (s *Scanner) PrintMatrix() {
 }
 func (s *Scanner) Start() {
 	if s.EnableCpuProfile {
-		cpuf, err := os.Create(s.CpuProfileName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(cpuf)
-		defer pprof.StopCPUProfile()
+		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
 	if s.PrintMetricsInterval > 0 {
 		go s.PrintMatrix()
