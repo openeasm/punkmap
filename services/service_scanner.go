@@ -89,7 +89,7 @@ type Scanner struct {
 
 	OutputHex        bool   `long:"output-hex" description:"output base64"`
 	OutputClose      bool   `long:"output-close" description:"output closed ports"`
-	EnableCpuProfile bool   `long:"enable-cpu-profile" description:"enable cpu profile" default:"false"`
+	EnableCpuProfile bool   `long:"enable-cpu-profile" description:"enable cpu profile"`
 	CpuProfileName   string `long:"cpu-profile-name" description:"cpu profilename" default:"punkmap_cpu.prof"`
 }
 
