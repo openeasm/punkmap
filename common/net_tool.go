@@ -9,47 +9,48 @@ func ReadAll(conn net.Conn) (data []byte, err error) {
 	// read data from conn
 	buffer := make([]byte, 1024)
 
-	for waitTtl := 1; waitTtl > 0; waitTtl-- {
+	for {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		if err != nil {
+			//if timeout,return no error
+			if err.Error() == "EOF" {
+				err = nil
+			}
 			return data, err
 		}
 		if n < 1024 {
 			return data, nil
 		}
 	}
-	return data, err
 }
 func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
-	buffer := make([]byte, 1)
+	buffer := make([]byte, 1024)
 	readCnt := 0
-	for waitTtl := 1; waitTtl > 0; waitTtl-- {
+	for {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		readCnt += n
-		if err != nil && waitTtl == 0 {
+		if err != nil {
 			return data, err
 		}
 		if bytes.Contains(buffer[:n], []byte("\n")) {
 			return data, nil
 		}
 	}
-	return data, err
 }
 func ReadUntilNBytes(conn net.Conn, maxBytes int) (data []byte, err error) {
 	buffer := make([]byte, maxBytes)
 	readCnt := 0
-	for waitTtl := 1; waitTtl > 0; waitTtl-- {
+	for {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		readCnt += n
-		if err != nil && waitTtl == 0 {
+		if err != nil {
 			return data, err
 		}
-		if readCnt >= maxBytes {
+		if readCnt == maxBytes {
 			return data, nil
 		}
 	}
-	return data, err
 }

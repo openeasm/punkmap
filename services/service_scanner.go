@@ -112,7 +112,7 @@ func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
 	}
 }
 func (s *Scanner) Scan(t Task) (r *Result) {
-	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp"}
+	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix()}
 	if PortScannersMapping[t.port] != nil {
 		for _, scanner := range PortScannersMapping[t.port] {
 			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
@@ -120,6 +120,7 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 				return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
 			}
 			defer conn.Close()
+			conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
 			service, banner, err := scanner.Scan(conn, t)
 			if err != nil {
 				result.ErrorMsg = err.Error()
