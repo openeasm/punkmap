@@ -56,12 +56,13 @@ type Metrics struct {
 	AvgTime    int64 `json:"avg_time"`
 	HasBanner  int64 `json:"has_banner"`
 	NoBanner   int64 `json:"no_banner"`
+	StartTime  int64 `json:"start_time"`
 }
 
 func (m *Metrics) LogSuccessRate() {
 	if m.Open != 0 && m.Total != 0 {
-		log.Printf("total -> open rate: %f,open -> has banner rate: %f, total -> has banenr rate: %f\n",
-			float64(m.Open)/float64(m.Total), float64(m.HasBanner)/float64(m.Open), float64(m.HasBanner)/float64(m.Total))
+		log.Printf("total -> open rate: %f,open -> has banner rate: %f, total -> has banenr rate: %f\n, process speed: %d/s",
+			float64(m.Open)/float64(m.Total), float64(m.HasBanner)/float64(m.Open), float64(m.HasBanner)/float64(m.Total), float64(m.Total)/float64(time.Now().Unix()-m.StartTime))
 	} else {
 	}
 }
@@ -269,6 +270,7 @@ func (s *Scanner) PrintMatrix() {
 	}
 }
 func (s *Scanner) Start() {
+	s.Metrics.StartTime = time.Now().Unix()
 	if s.EnableCpuProfile {
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
