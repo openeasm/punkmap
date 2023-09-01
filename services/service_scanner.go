@@ -59,7 +59,11 @@ type Metrics struct {
 }
 
 func (m *Metrics) LogSuccessRate() {
-	log.Printf("LogSuccessRate: %f,has banner rate: %f\n", float64(m.Open)/float64(m.Total), float64(m.HasBanner)/float64(m.Total))
+	if m.Open != 0 && m.Total != 0 {
+		log.Printf("total -> open rate: %f,open -> has banner rate: %f, total -> has banenr rate: %f\n",
+			float64(m.Open)/float64(m.Total), float64(m.HasBanner)/float64(m.Open), float64(m.HasBanner)/float64(m.Total))
+	} else {
+	}
 }
 
 type Scanner struct {
