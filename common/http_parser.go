@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -11,6 +12,14 @@ var keyRegex = regexp.MustCompile(`(?i)<meta.*?name=["']?keywords["']?.*?content
 var descRegex = regexp.MustCompile(`(?i)<meta.*?name=["']?description["']?.*?content=["']?(.*?)["']?/?>`)
 
 func HTTPParser(banner []byte) map[string]string {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("http parser panic:", err)
+			fmt.Println("------------banner start ------------")
+			fmt.Println(string(banner))
+			fmt.Println("------------banner end ------------")
+		}
+	}()
 	result := make(map[string]string)
 	if bytes.Contains(banner, []byte("\r\n\r\n")) {
 		var bannerHeader = banner[:bytes.Index(banner, []byte("\r\n\r\n"))]
