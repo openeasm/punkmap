@@ -24,6 +24,7 @@ func ReadAll(conn net.Conn) (data []byte, err error) {
 		}
 	}
 }
+
 func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 	buffer := make([]byte, 1024)
 	readCnt := 0

@@ -23,7 +23,6 @@ func (s *HTTP) Scan(conn net.Conn, task Task) (service string, banner []byte, er
 	} else {
 		return "", banner, err
 	}
-
 }
 
 func (s *HTTP) DefaultPorts() []string {
