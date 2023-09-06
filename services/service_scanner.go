@@ -350,9 +350,13 @@ func (s *Scanner) Start() {
 		})
 
 		for {
-			c, _ := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
+			c, err := stream.CreateOrUpdateConsumer(timeoutCtx, jetstream.ConsumerConfig{
 				Name: s.NatsWorkerName,
 			})
+			if err != nil {
+				time.Sleep(1 * time.Second)
+				log.Println("create consumer error:", err)
+			}
 			//msg, err := c.Next()
 			var cxt, _ = c.Messages()
 
