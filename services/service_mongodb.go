@@ -9,7 +9,7 @@ import (
 type MongoDB struct {
 }
 
-func (s *MongoDB) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
+func (s *MongoDB) Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error) {
 	// no need send data, read data directly
 	// read data from conn
 	// write mongodb handshake data, send ping

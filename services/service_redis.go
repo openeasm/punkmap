@@ -8,7 +8,7 @@ import (
 type Redis struct {
 }
 
-func (s *Redis) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
+func (s *Redis) Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error) {
 	// no need send data, read data directly
 	// read data from conn
 	_, err = conn.Write([]byte("*1\r\n$4\r\nPING\r\n"))

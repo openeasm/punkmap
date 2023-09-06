@@ -9,7 +9,7 @@ import (
 type HTTP struct {
 }
 
-func (s *HTTP) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
+func (s *HTTP) Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error) {
 	// no need send data, read data directly
 	// read data from conn
 	httpReq := fmt.Sprintf("GET / HTTP/1.1\r\nUser-Agent: PunkMap (https://github.com/openeasm/punkmap)\r\nHost: %s\r\nConnection: close\r\nAccept: */*\r\n\r\n", task.ToHttpHost())

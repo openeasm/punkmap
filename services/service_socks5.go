@@ -8,7 +8,7 @@ import (
 type Socks5 struct {
 }
 
-func (s *Socks5) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
+func (s *Socks5) Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error) {
 	// send socks5 auth
 	// Greeting from Client
 	_, err = conn.Write([]byte{0x05, 0x01, 0x00})

@@ -14,7 +14,7 @@ func TestHTTPS_Scan(t *testing.T) {
 	conn, _ := net.Dial("tcp", task.ip+":"+task.port)
 
 	mq := HTTPS{}
-	service, banner, err := mq.Scan(conn, task)
+	service, banner, err := mq.Scan(conn, task, nil)
 	fmt.Println(service)
 	fmt.Println(string(banner))
 	fmt.Println(err)

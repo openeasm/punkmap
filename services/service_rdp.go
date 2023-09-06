@@ -8,7 +8,7 @@ import (
 type RDP struct {
 }
 
-func (s *RDP) Scan(conn net.Conn, task Task) (service string, banner []byte, err error) {
+func (s *RDP) Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error) {
 	// read data from conn
 	/* 0x03,       # version
 	   0x00,       # reserved

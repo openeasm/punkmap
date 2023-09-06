@@ -3,7 +3,7 @@ package services
 import "net"
 
 type ServiceScanner interface {
-	Scan(conn net.Conn, task Task) (service string, banner []byte, err error)
+	Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error)
 	DefaultPorts() []string
 }
 

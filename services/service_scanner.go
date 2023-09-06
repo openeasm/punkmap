@@ -36,17 +36,17 @@ func (task Task) ToHttpHost() string {
 }
 
 type Result struct {
-	IP              string            `json:"ip"`
-	ConnIP          string            `json:"conn_ip,omitempty"`
-	Port            string            `json:"port"`
-	Open            bool              `json:"open"`
-	ErrorMsg        string            `json:"error_msg,omitempty"`
-	Protocol        string            `json:"protocol,omitempty"`
-	Service         string            `json:"service,omitempty"`
-	ServiceAddition map[string]string `json:"-"`
-	Banner          string            `json:"banner,omitempty"`
-	BannerHex       []byte            `json:"banner_hex,omitempty"`
-	Time            int64             `json:"time"`
+	IP              string                 `json:"ip"`
+	ConnIP          string                 `json:"conn_ip,omitempty"`
+	Port            string                 `json:"port"`
+	Open            bool                   `json:"open"`
+	ErrorMsg        string                 `json:"error_msg,omitempty"`
+	Protocol        string                 `json:"protocol,omitempty"`
+	Service         string                 `json:"service,omitempty"`
+	ServiceAddition map[string]interface{} `json:"-"`
+	Banner          string                 `json:"banner,omitempty"`
+	BannerHex       []byte                 `json:"banner_hex,omitempty"`
+	Time            int64                  `json:"time"`
 }
 
 func (b *Result) ToJson() ([]byte, error) {
@@ -156,11 +156,13 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 			}
 			defer conn.Close()
 			conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
-			service, banner, err := scanner.Scan(conn, t)
+			service, banner, err := scanner.Scan(conn, t, result)
 			if service == "HTTP" || service == "HTTPS" {
 				parsedResponse := common.HTTPParser(banner)
 				if parsedResponse != nil {
-					result.ServiceAddition = parsedResponse
+					for k, v := range parsedResponse {
+						result.ServiceAddition[k] = v
+					}
 				}
 			}
 			if err != nil {

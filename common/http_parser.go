@@ -11,7 +11,7 @@ var titleRegex = regexp.MustCompile(`(?i)<title>(.*?)</title>`)
 var keyRegex = regexp.MustCompile(`(?i)<meta.*?name=["']?keywords["']?.*?content=["']?(.*?)["']?/?>`)
 var descRegex = regexp.MustCompile(`(?i)<meta.*?name=["']?description["']?.*?content=["']?(.*?)["']?/?>`)
 
-func HTTPParser(banner []byte) map[string]string {
+func HTTPParser(banner []byte) map[string]interface{} {
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println("http parser panic:", err)
@@ -20,7 +20,7 @@ func HTTPParser(banner []byte) map[string]string {
 			fmt.Println("------------banner end ------------")
 		}
 	}()
-	result := make(map[string]string)
+	result := make(map[string]interface{})
 	if bytes.Contains(banner, []byte("\r\n\r\n")) {
 		var bannerHeader = banner[:bytes.Index(banner, []byte("\r\n\r\n"))]
 		headerLine := bytes.Split(bannerHeader, []byte("\r\n"))
