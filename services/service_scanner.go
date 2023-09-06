@@ -37,6 +37,7 @@ func (task Task) ToHttpHost() string {
 
 type Result struct {
 	IP              string            `json:"ip"`
+	ConnIP          string            `json:"conn_ip,omitempty"`
 	Port            string            `json:"port"`
 	Open            bool              `json:"open"`
 	ErrorMsg        string            `json:"error_msg,omitempty"`
@@ -148,6 +149,10 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
 			if err != nil {
 				return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
+			}
+			if conn.RemoteAddr().String() != t.ip+":"+t.port {
+				connIPPort := conn.RemoteAddr().String()
+				result.ConnIP = strings.Split(connIPPort, ":")[0]
 			}
 			defer conn.Close()
 			conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
