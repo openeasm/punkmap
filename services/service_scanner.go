@@ -143,7 +143,7 @@ func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
 	}
 }
 func (s *Scanner) Scan(t Task) (r *Result) {
-	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix()}
+	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix(), ServiceAddition: map[string]interface{}{}}
 	if PortScannersMapping[t.port] != nil {
 		for _, scanner := range PortScannersMapping[t.port] {
 			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
@@ -348,8 +348,20 @@ func (s *Scanner) Start() {
 		scanWg.Add(1)
 	}
 	if len(s.InputNatsURL) > 0 {
-		nc, _ := nats.Connect(s.InputNatsURL)
-		js, _ := jetstream.New(nc)
+		nc, err := nats.Connect(s.InputNatsURL)
+		if err != nil {
+			panic(err)
+		}
+		if s.Debug {
+			log.Printf("connect to nats %s success", s.InputNatsURL)
+		}
+		js, err := jetstream.New(nc)
+		if err != nil {
+			panic(err)
+		}
+		if s.Debug {
+			log.Printf("connect to jetstream success")
+		}
 		timeoutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		stream, _ := js.CreateStream(timeoutCtx, jetstream.StreamConfig{
 			Name:     s.InputNatsJS,

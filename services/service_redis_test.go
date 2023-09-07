@@ -28,7 +28,7 @@ func TestRedis_Scan1(t *testing.T) {
 	conn, _ := net.Dial("tcp", "121.40.92.218:6379")
 	// send redis probe
 	redis := Redis{}
-	service, banner, err := redis.Scan(conn, Task{})
+	service, banner, err := redis.Scan(conn, Task{}, &Result{})
 	if err != nil {
 		t.Error(err)
 	} else {
