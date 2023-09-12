@@ -3,9 +3,8 @@
 端口扫描和服务识别软件。特点：快、准、全部开源，持续更新。
 
 ## 支持协议 / Supported Protocols
+<img width="929" alt="image" src="https://github.com/openeasm/punkmap/assets/15059493/d90ce160-2642-4cfa-9881-a684e02c2a42">
 
-- SSH
-- RocketMQ(NameServer) - added cause CVE-2023-37582(RocketMQ RCE)
 
 ## Note
 
