@@ -318,6 +318,7 @@ func (s *Scanner) PrintMatrix() {
 		s.Metrics.LogSuccessRate()
 	}
 }
+
 func (s *Scanner) Start() {
 	s.Metrics.StartTime = time.Now().Unix()
 	if s.EnableCpuProfile {
