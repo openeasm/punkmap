@@ -48,7 +48,7 @@ func (s *HTTPS) Scan(conn net.Conn, task Task, result *Result) (service string, 
 	mapedCert["cert_signature_algorithm"] = cert.SignatureAlgorithm.String()
 	mapedCert["cert_public_key_algorithm"] = cert.PublicKeyAlgorithm.String()
 	mapedCert["cert_human_readable"] = x509certHumanReadable(cert)
-	result.ServiceAddition = mapedCert
+	result.ServiceMeta = mapedCert
 	if len(banner) > 0 && len(banner) > 5 && banner[0] == 'H' && banner[1] == 'T' && banner[2] == 'T' && banner[3] == 'P' && banner[4] == '/' {
 		return "HTTPS", banner, nil
 	} else {

@@ -36,21 +36,21 @@ func (task Task) ToHttpHost() string {
 }
 
 type Result struct {
-	IP              string                 `json:"ip"`
-	ConnIP          string                 `json:"conn_ip,omitempty"`
-	Port            string                 `json:"port"`
-	Open            bool                   `json:"open"`
-	ErrorMsg        string                 `json:"error_msg,omitempty"`
-	Protocol        string                 `json:"protocol,omitempty"`
-	Service         string                 `json:"service,omitempty"`
-	ServiceAddition map[string]interface{} `json:"-"`
-	Banner          string                 `json:"banner,omitempty"`
-	BannerHex       []byte                 `json:"banner_hex,omitempty"`
-	Time            int64                  `json:"time"`
+	IP          string                 `json:"ip"`
+	ConnIP      string                 `json:"conn_ip,omitempty"`
+	Port        string                 `json:"port"`
+	Open        bool                   `json:"open"`
+	ErrorMsg    string                 `json:"error_msg,omitempty"`
+	Protocol    string                 `json:"protocol,omitempty"`
+	Service     string                 `json:"service,omitempty"`
+	ServiceMeta map[string]interface{} `json:"-"`
+	Banner      string                 `json:"banner,omitempty"`
+	BannerHex   []byte                 `json:"banner_hex,omitempty"`
+	Time        int64                  `json:"time"`
 }
 
 func (b *Result) ToJson() ([]byte, error) {
-	if b.ServiceAddition != nil {
+	if b.ServiceMeta != nil {
 		var inInterface map[string]interface{}
 		inrec, err := json.Marshal(b)
 		if err != nil {
@@ -58,13 +58,13 @@ func (b *Result) ToJson() ([]byte, error) {
 		}
 		json.Unmarshal(inrec, &inInterface)
 		// merge the two maps
-		for k, v := range b.ServiceAddition {
+		for k, v := range b.ServiceMeta {
 			//fmt.Println("k:", k, "v:", v)
 			inInterface[k] = v
 		}
 		return json.Marshal(inInterface)
 
-		//data:= json.Marshal(b.ServiceAddition)
+		//data:= json.Marshal(b.ServiceMeta)
 
 	} else {
 		return json.Marshal(b)
@@ -143,7 +143,7 @@ func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
 	}
 }
 func (s *Scanner) Scan(t Task) (r *Result) {
-	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix()}
+	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix(), ServiceMeta: map[string]interface{}{}}
 	if PortScannersMapping[t.port] != nil {
 		for _, scanner := range PortScannersMapping[t.port] {
 			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
@@ -161,7 +161,7 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 				parsedResponse := common.HTTPParser(banner)
 				if parsedResponse != nil {
 					for k, v := range parsedResponse {
-						result.ServiceAddition[k] = v
+						result.ServiceMeta[k] = v
 					}
 				}
 			}
@@ -183,17 +183,25 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 	for ipAddr := range inputChan {
 		atomic.AddInt64(&s.Processing, 1)
 		atomic.AddInt64(&s.Total, 1)
-
+		atomic.AddInt64(&s.Processing, -1)
+		var tasks []Task
 		if strings.Contains(ipAddr, ":") { //
 			// split ip:port
 			ip := strings.Split(ipAddr, ":")[0]
 			port := strings.Split(ipAddr, ":")[1]
-			if s.Debug {
-				log.Printf("start scan %s:%s", ip, port)
+			tasks = append(tasks, Task{ip: ip, port: port, timeout: s.Timeout})
+		} else if strings.Contains(s.Ports, ",") {
+			// split ip:port
+			for _, port := range strings.Split(s.Ports, ",") {
+				tasks = append(tasks, Task{ip: ipAddr, port: port, timeout: s.Timeout})
 			}
-			// 开始扫描
-			startTime := time.Now().UnixMilli()
-			task := Task{ip: ip, port: port, timeout: s.Timeout}
+		}
+		// 开始扫描
+		startTime := time.Now().UnixMilli()
+		for _, task := range tasks {
+			if s.Debug {
+				log.Printf("start scan %s:%s", tasks[0].ip, tasks[0].port)
+			}
 			result := s.ScanWithGlobalTimeout(task)
 			endTime := time.Now().UnixMilli()
 			if result.Open {
@@ -208,17 +216,11 @@ func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg 
 			}
 			totalCost := endTime - startTime
 			if s.Debug {
-				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", ip, port, result.Open, totalCost)
+				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", task.ip, task.port, result.Open, totalCost)
 			}
-			atomic.AddInt64(&s.Processing, -1)
 			outputChan <- result
-		} else {
-			for _, port := range strings.Split(s.Ports, ",") {
-				task := Task{ip: ipAddr, port: port, timeout: s.Timeout}
-				result := s.Scan(task)
-				outputChan <- result
-			}
 		}
+
 	}
 }
 func (s *Scanner) WriteWorker(output chan *Result, outputWg *sync.WaitGroup) {
