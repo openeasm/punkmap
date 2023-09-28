@@ -144,38 +144,43 @@ func (s *Scanner) ScanWithGlobalTimeout(t Task) (r *Result) {
 }
 func (s *Scanner) Scan(t Task) (r *Result) {
 	result := &Result{IP: t.ip, Port: t.port, Open: true, Protocol: "tcp", Time: time.Now().Unix(), ServiceMeta: map[string]interface{}{}}
+	var plugins []ServiceScanner
 	if PortScannersMapping[t.port] != nil {
-		for _, scanner := range PortScannersMapping[t.port] {
-			conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
-			if err != nil {
-				return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
-			}
-			if conn.RemoteAddr().String() != t.ip+":"+t.port {
-				connIPPort := conn.RemoteAddr().String()
-				result.ConnIP = strings.Split(connIPPort, ":")[0]
-			}
-			defer conn.Close()
-			conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
-			service, banner, err := scanner.Scan(conn, t, result)
-			if service == "HTTP" || service == "HTTPS" {
-				parsedResponse := common.HTTPParser(banner)
-				if parsedResponse != nil {
-					for k, v := range parsedResponse {
-						result.ServiceMeta[k] = v
-					}
-				}
-			}
-			if err != nil {
-				result.ErrorMsg = err.Error()
-			}
-			result.Service = service
-			result.BannerHex = banner
-			if banner != nil {
-				break
-			}
-		}
+		plugins = PortScannersMapping[t.port]
+	} else {
+		// use http scanner as default
+		plugins = append(plugins, &HTTP{})
 	}
 
+	for _, scanner := range plugins {
+		conn, err := net.DialTimeout("tcp", t.ip+":"+t.port, time.Duration(t.timeout)*time.Second)
+		if err != nil {
+			return &Result{IP: t.ip, Port: t.port, Open: false, ErrorMsg: err.Error(), Protocol: "tcp"}
+		}
+		if conn.RemoteAddr().String() != t.ip+":"+t.port {
+			connIPPort := conn.RemoteAddr().String()
+			result.ConnIP = strings.Split(connIPPort, ":")[0]
+		}
+		defer conn.Close()
+		conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
+		service, banner, err := scanner.Scan(conn, t, result)
+		if service == "HTTP" || service == "HTTPS" {
+			parsedResponse := common.HTTPParser(banner)
+			if parsedResponse != nil {
+				for k, v := range parsedResponse {
+					result.ServiceMeta[k] = v
+				}
+			}
+		}
+		if err != nil {
+			result.ErrorMsg = err.Error()
+		}
+		result.Service = service
+		result.BannerHex = banner
+		if banner != nil {
+			break
+		}
+	}
 	return result
 }
 func (s *Scanner) Task2Result(task Task) *Result {
