@@ -178,49 +178,51 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 
 	return result
 }
+func (s *Scanner) Task2Result(task Task) *Result {
+	startTime := time.Now().UnixMilli()
+	if s.Debug {
+		log.Printf("start scan %s:%s", task.ip, task.port)
+	}
+	result := s.ScanWithGlobalTimeout(task)
+	endTime := time.Now().UnixMilli()
+	if result.Open {
+		atomic.AddInt64(&s.Open, 1)
+	} else {
+		atomic.AddInt64(&s.Close, 1)
+	}
+	if result.BannerHex != nil {
+		atomic.AddInt64(&s.HasBanner, 1)
+	} else {
+		atomic.AddInt64(&s.NoBanner, 1)
+	}
+	totalCost := endTime - startTime
+	if s.Debug {
+		log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", task.ip, task.port, result.Open, totalCost)
+	}
+	return result
+}
 func (s *Scanner) ScanWorker(inputChan chan string, outputChan chan *Result, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for ipAddr := range inputChan {
 		atomic.AddInt64(&s.Processing, 1)
 		atomic.AddInt64(&s.Total, 1)
-		atomic.AddInt64(&s.Processing, -1)
 		var tasks []Task
-		if strings.Contains(ipAddr, ":") { //
+		if strings.Contains(ipAddr, ":") {
 			// split ip:port
 			ip := strings.Split(ipAddr, ":")[0]
 			port := strings.Split(ipAddr, ":")[1]
 			tasks = append(tasks, Task{ip: ip, port: port, timeout: s.Timeout})
 		} else if strings.Contains(s.Ports, ",") {
-			// split ip:port
+			// pre scan mode. ports is split by ,
 			for _, port := range strings.Split(s.Ports, ",") {
 				tasks = append(tasks, Task{ip: ipAddr, port: port, timeout: s.Timeout})
 			}
 		}
-		// 开始扫描
-		startTime := time.Now().UnixMilli()
 		for _, task := range tasks {
-			if s.Debug {
-				log.Printf("start scan %s:%s", tasks[0].ip, tasks[0].port)
-			}
-			result := s.ScanWithGlobalTimeout(task)
-			endTime := time.Now().UnixMilli()
-			if result.Open {
-				atomic.AddInt64(&s.Open, 1)
-			} else {
-				atomic.AddInt64(&s.Close, 1)
-			}
-			if result.BannerHex != nil {
-				atomic.AddInt64(&s.HasBanner, 1)
-			} else {
-				atomic.AddInt64(&s.NoBanner, 1)
-			}
-			totalCost := endTime - startTime
-			if s.Debug {
-				log.Printf("finish scan %s:%s, open:%t . time_cost:%d ms", task.ip, task.port, result.Open, totalCost)
-			}
+			result := s.Task2Result(task)
 			outputChan <- result
 		}
-
+		atomic.AddInt64(&s.Processing, -1)
 	}
 }
 func (s *Scanner) WriteWorker(output chan *Result, outputWg *sync.WaitGroup) {
