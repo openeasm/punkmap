@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"io"
 	"net"
 )
 
@@ -32,7 +33,9 @@ func ReadUntilNewLine(conn net.Conn) (data []byte, err error) {
 		n, err := conn.Read(buffer)
 		data = append(data, buffer[:n]...)
 		readCnt += n
-		if err != nil {
+		if err == io.EOF {
+			return data, nil
+		} else if err != nil {
 			return data, err
 		}
 		if bytes.Contains(buffer[:n], []byte("\n")) {
