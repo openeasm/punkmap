@@ -342,7 +342,6 @@ func (s *Scanner) Start() {
 			go s.NatsWriteWorker(outputChan, &outputWg)
 			outputWg.Add(1)
 		}
-
 	} else {
 		go s.WriteWorker(outputChan, &outputWg)
 		outputWg.Add(1)
