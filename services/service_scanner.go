@@ -320,6 +320,7 @@ func (s *Scanner) PrintMatrix() {
 		s.Metrics.LogSuccessRate()
 	}
 }
+
 func (s *Scanner) Start() {
 	s.Metrics.StartTime = time.Now().Unix()
 	if s.EnableCpuProfile {
@@ -350,8 +351,20 @@ func (s *Scanner) Start() {
 		scanWg.Add(1)
 	}
 	if len(s.InputNatsURL) > 0 {
-		nc, _ := nats.Connect(s.InputNatsURL)
-		js, _ := jetstream.New(nc)
+		nc, err := nats.Connect(s.InputNatsURL)
+		if err != nil {
+			panic(err)
+		}
+		if s.Debug {
+			log.Printf("connect to nats %s success", s.InputNatsURL)
+		}
+		js, err := jetstream.New(nc)
+		if err != nil {
+			panic(err)
+		}
+		if s.Debug {
+			log.Printf("connect to jetstream success")
+		}
 		timeoutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		stream, _ := js.CreateStream(timeoutCtx, jetstream.StreamConfig{
 			Name:     s.InputNatsJS,

@@ -15,7 +15,7 @@ func TestHTTP_Scan(t *testing.T) {
 	conn, _ := net.Dial("tcp", task.ip+":"+task.port)
 
 	mq := HTTP{}
-	service, banner, err := mq.Scan(conn, task)
+	service, banner, err := mq.Scan(conn, task, &Result{})
 	fmt.Println(service)
 	fmt.Println(string(banner))
 	fmt.Println(err)
@@ -30,7 +30,7 @@ func BenchmarkFib(b *testing.B) {
 		conn, _ := net.Dial("tcp", task.ip+":"+task.port)
 
 		mq := HTTP{}
-		service, _, _ := mq.Scan(conn, task)
+		service, _, _ := mq.Scan(conn, task, &Result{})
 		fmt.Println(service)
 	}
 }
