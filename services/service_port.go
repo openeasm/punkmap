@@ -2,8 +2,16 @@ package services
 
 import "net"
 
+type PortInfo struct {
+	protocol string
+	service  string
+	banner   []byte
+	version  string
+	err      error
+}
+
 type ServiceScanner interface {
-	Scan(conn net.Conn, task Task, result *Result) (service string, banner []byte, err error)
+	Scan(conn net.Conn, task Task, result *Result) PortInfo
 	DefaultPorts() []string
 }
 

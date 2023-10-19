@@ -45,6 +45,7 @@ type Result struct {
 	Service     string                 `json:"service,omitempty"`
 	ServiceMeta map[string]interface{} `json:"-"`
 	Banner      string                 `json:"banner,omitempty"`
+	Version     string                 `json:"version,omitempty"`
 	BannerHex   []byte                 `json:"banner_hex,omitempty"`
 	Time        int64                  `json:"time"`
 }
@@ -148,8 +149,8 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 	if PortScannersMapping[t.port] != nil {
 		plugins = PortScannersMapping[t.port]
 	} else {
-		// use http scanner as default
-		plugins = append(plugins, &HTTP{})
+		// fixme: use http scanner as default
+		return
 	}
 
 	for _, scanner := range plugins {
@@ -163,21 +164,17 @@ func (s *Scanner) Scan(t Task) (r *Result) {
 		}
 		defer conn.Close()
 		conn.SetReadDeadline(time.Now().Add(time.Duration(t.timeout) * time.Second))
-		service, banner, err := scanner.Scan(conn, t, result)
-		if service == "HTTP" || service == "HTTPS" {
-			parsedResponse := common.HTTPParser(banner)
-			if parsedResponse != nil {
-				for k, v := range parsedResponse {
-					result.ServiceMeta[k] = v
-				}
-			}
+		portInfo := scanner.Scan(conn, t, result)
+		if portInfo.err != nil {
+			result.ErrorMsg = portInfo.err.Error()
 		}
 		if err != nil {
 			result.ErrorMsg = err.Error()
 		}
-		result.Service = service
-		result.BannerHex = banner
-		if banner != nil {
+		result.Service = portInfo.service
+		result.BannerHex = portInfo.banner
+		result.Version = portInfo.version
+		if result.BannerHex != nil {
 			break
 		}
 	}
