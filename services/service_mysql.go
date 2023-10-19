@@ -19,12 +19,13 @@ func (m MySQL) Scan(conn net.Conn, task Task, result *Result) PortInfo {
 	// 包内容解释：
 	// 4a : Packet length, indicating that the total length of the packet is 74 bytes.
 	// 00 00 00: Filler bytes.
-	// 0a: Sequence number.
+	// 0a: 握手版本 （v10）.
 	// 35 2e 37 2e 34 32 00: MySQL server version string, which seems to be "5.7.42."
 	// 27: Connection ID.
 	// 00 00 00: More filler bytes.
 	// 5b 04 42 3f: Part of the authentication data.
 	lengthBuffer := make([]byte, 4)
+
 	portInfo := PortInfo{}
 	_, err := conn.Read(lengthBuffer)
 	if err != nil {
@@ -34,7 +35,7 @@ func (m MySQL) Scan(conn net.Conn, task Task, result *Result) PortInfo {
 	// 读取包长度，Little-endian
 	packetLength := binary.LittleEndian.Uint32(lengthBuffer)
 
-	// 读取包内容
+	// 读取全部包内容
 	banner, err := common.ReadUntilNBytes(conn, int(packetLength))
 	if err != nil {
 		portInfo.banner = banner
